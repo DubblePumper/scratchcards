@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scratch cards</title>
+    <base href="../assets/" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <!-- fav icon -->
+    <link rel="icon" href="images/favicon.png" type="image/x-icon" />
+    <style>
+      .scratchable {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .scratchable canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        border-radius: 9999px;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/fireworks-js@2.10.8/dist/index.umd.js"></script>
+  </head>
+  <body class="bg-[url('/assets/images/background.jpg')] text-slate-50 mt-24">
+    <header class="flex flex-col justify-center items-center mt-5 mb-24">
+      <h1 class="capitalize text-6xl text-black">Cratch the items</h1>
+      <h2 class="capitalize text-4xl mt-5 text-black">1 Per Day</h2>
+    </header>
+
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-20 place-content-around justify-items-center items-center *:flex *:justify-center *:items-center *:w-72 *:h-24 *:bg-[#A020F0] *:rounded-full *:border-2 *:border-black *:cursor-pointer *:select-none"
+    >
+      <div class="grid-item scratchable"><p>Item 1</p></div>
+      <div class="grid-item scratchable"><p>Item 2</p></div>
+      <div class="grid-item scratchable"><p>Item 3</p></div>
+      <div class="grid-item scratchable"><p>Item 4</p></div>
+      <div class="grid-item scratchable"><p>Item 5</p></div>
+      <div class="grid-item scratchable"><p>Item 6</p></div>
+      <div class="grid-item scratchable"><p>Item 7</p></div>
+      <div class="grid-item scratchable"><p>Item 8</p></div>
+      <div class="grid-item scratchable"><p>Item 9</p></div>
+      <div class="grid-item scratchable"><p>Item 10</p></div>
+      <div class="grid-item scratchable"><p>Item 11</p></div>
+      <div class="grid-item scratchable"><p>Item 12</p></div>
+      <div class="grid-item scratchable"><p>Item 13</p></div>
+      <div class="grid-item scratchable"><p>Item 14</p></div>
+      <div class="grid-item scratchable"><p>Item 15</p></div>
+      <div class="grid-item scratchable"><p>Item 16</p></div>
+      <div class="grid-item scratchable"><p>Item 17</p></div>
+      <div class="grid-item scratchable"><p>Item 18</p></div>
+      <div class="grid-item scratchable"><p>Item 19</p></div>
+      <div class="grid-item scratchable"><p>Item 20</p></div>
+      <!-- Add more items as needed -->
+    </div>
+  </body>
+  <script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+      const scratchables = document.querySelectorAll(".scratchable");
+
+      scratchables.forEach((scratchable, index) => {
+        const canvas = document.createElement("canvas");
+        scratchable.appendChild(canvas);
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+        canvas.width = scratchable.offsetWidth;
+        canvas.height = scratchable.offsetHeight;
+
+        ctx.fillStyle = "#C0C0C0"; // Silver color for scratch-off layer
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let isDrawing = false;
+        let revealed = false;
+
+        canvas.addEventListener("mousedown", (e) => {
+          isDrawing = true;
+          scratch(e);
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+          if (isDrawing) {
+            scratch(e);
+          }
+        });
+
+        canvas.addEventListener("mouseup", () => {
+          isDrawing = false;
+          checkReveal();
+        });
+
+        canvas.addEventListener("mouseleave", () => {
+          isDrawing = false;
+        });
+
+        function scratch(e) {
+          const rect = canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.globalAlpha = 0.2; // Adjust this value to control the number of passes needed
+          ctx.beginPath();
+          ctx.arc(x, y, 20, 0, Math.PI * 2, false);
+          ctx.fill();
+          ctx.globalAlpha = 1.0; // Reset alpha to default
+
+          console.log(`Scratched at (${x}, ${y})`);
+        }
+
+        function checkReveal() {
+          if (revealed) return;
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const pixels = imageData.data;
+          let revealedPixels = 0;
+
+          for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] < 255) {
+              // Check if the alpha value is less than 255
+              revealedPixels++;
+            }
+          }
+
+          const revealPercentage = (revealedPixels / (pixels.length / 4)) * 100;
+          console.log(
+            `Item ${index + 1} reveal percentage: ${revealPercentage}%`
+          );
+
+          if (revealPercentage > 75) {
+            // Adjusted to 75% threshold
+            revealed = true;
+            triggerFireworks();
+            console.log(`Item ${index + 1} revealed!`);
+            animateClearCanvas();
+          }
+        }
+        function animateClearCanvas() {
+          const totalSteps = 500; // Total number of animation steps for 5 seconds (100ms per step)
+          let currentStep = 0;
+
+          function step() {
+            if (currentStep < totalSteps) {
+              const alpha = 1 - currentStep / totalSteps;
+              ctx.globalAlpha = alpha;
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.fillStyle = `rgba(192, 192, 192, ${alpha})`;
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              currentStep++;
+              setTimeout(step, 500); // Delay of 100ms for each step
+            } else {
+              ctx.globalAlpha = 1.0; // Reset alpha to default
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+          }
+
+          step();
+        }
+
+        function triggerFireworks() {
+          const container = document.createElement("div");
+          container.style.position = "fixed";
+          container.style.top = 0;
+          container.style.left = 0;
+          container.style.width = "100%";
+          container.style.height = "100%";
+          container.style.pointerEvents = "none";
+          document.body.appendChild(container);
+
+          const fireworks = new Fireworks.default(container, {
+            autoresize: true,
+            opacity: 0.5,
+            acceleration: 1.05,
+            friction: 0.97,
+            gravity: 1.5,
+            particles: 50,
+            trace: 3,
+            explosion: 5,
+            intensity: 30,
+            flickering: 50,
+            lineStyle: "round",
+            hue: {
+              min: 0,
+              max: 360
+            },
+            delay: {
+              min: 30,
+              max: 60
+            },
+            rocketsPoint: {
+              min: 50,
+              max: 50
+            },
+            lineWidth: {
+              explosion: {
+                min: 1,
+                max: 3
+              },
+              trace: {
+                min: 1,
+                max: 2
+              }
+            },
+            brightness: {
+              min: 50,
+              max: 80
+            },
+            decay: {
+              min: 0.015,
+              max: 0.03
+            },
+            mouse: {
+              click: false,
+              move: false,
+              max: 1
+            }
+          });
+
+          fireworks.start();
+
+          setTimeout(() => {
+            fireworks.stop();
+            document.body.removeChild(container);
+          }, 5000); // Fireworks duration
+        }
+      });
+    });
+  </script>
+</html>
