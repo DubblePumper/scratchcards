@@ -62,7 +62,20 @@
   </body>
   <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function () {
+      console.log(document.cookie);
       const scratchables = document.querySelectorAll(".scratchable");
+      let isMouseDown = false; // Track global mouse down state
+      let currentCanvas = null; // Track the current canvas being scratched
+
+      // Track the global mouse down state
+      document.addEventListener("mousedown", () => {
+        isMouseDown = true;
+      });
+
+      document.addEventListener("mouseup", () => {
+        isMouseDown = false;
+        currentCanvas = null; // Reset the current canvas after mouseup
+      });
 
       scratchables.forEach((scratchable, index) => {
         const canvas = document.createElement("canvas");
@@ -80,11 +93,12 @@
 
         canvas.addEventListener("mousedown", (e) => {
           isDrawing = true;
+          currentCanvas = canvas; // Track which canvas is being scratched
           scratch(e);
         });
 
         canvas.addEventListener("mousemove", (e) => {
-          if (isDrawing) {
+          if (isDrawing && currentCanvas === canvas) {
             scratch(e);
           }
         });
@@ -98,6 +112,14 @@
           isDrawing = false;
         });
 
+        // Continue scratching when re-entering the same canvas
+        canvas.addEventListener("mouseenter", (e) => {
+          if (isMouseDown && currentCanvas === canvas) {
+            isDrawing = true;
+            scratch(e);
+          }
+        });
+
         function scratch(e) {
           const rect = canvas.getBoundingClientRect();
           const x = e.clientX - rect.left;
@@ -109,8 +131,6 @@
           ctx.arc(x, y, 20, 0, Math.PI * 2, false);
           ctx.fill();
           ctx.globalAlpha = 1.0; // Reset alpha to default
-
-          console.log(`Scratched at (${x}, ${y})`);
         }
 
         function checkReveal() {
@@ -137,11 +157,16 @@
             revealed = true;
             triggerFireworks();
             console.log(`Item ${index + 1} revealed!`);
+            //setcookie for the item revealed
+            document.cookie = `item-releaved=Item-${index + 1}; path=/`;
+
+
             animateClearCanvas();
           }
         }
+
         function animateClearCanvas() {
-          const totalSteps = 500; // Total number of animation steps for 5 seconds (100ms per step)
+          const totalSteps = 500;
           let currentStep = 0;
 
           function step() {
@@ -152,9 +177,9 @@
               ctx.fillStyle = `rgba(192, 192, 192, ${alpha})`;
               ctx.fillRect(0, 0, canvas.width, canvas.height);
               currentStep++;
-              setTimeout(step, 500); // Delay of 100ms for each step
+              setTimeout(step, 500);
             } else {
-              ctx.globalAlpha = 1.0; // Reset alpha to default
+              ctx.globalAlpha = 1.0;
               ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
           }
