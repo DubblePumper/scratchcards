@@ -3,3 +3,25 @@
     padding: 0;
     box-sizing: border-box;
 }
+
+.scratchable {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+  }
+
+  .scratchable canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    border-radius: 9999px;
+  }
+
+  .last-row {
+    margin-bottom: 10rem;
+    overflow-x: hidden;
+  }

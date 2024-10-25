@@ -67,6 +67,7 @@ $scratchItems = fetchScratchItems();
 </head>
 
 <body class="bg-[url('/assets/images/background.jpg')] text-slate-50 mt-24 w-screen overflow-x-hidden">
+  <div id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999;"></div>
   <header class="flex flex-col justify-center items-center mt-5 mb-24 w-screen overflow-x-hidden">
     <h1 class="capitalize text-6xl text-black">Scratch the items</h1>
     <h2 class="capitalize text-4xl mt-5 text-black">1 Per Day</h2>
@@ -87,6 +88,14 @@ $scratchItems = fetchScratchItems();
     function main() {
       const scratchItems = Array.from(document.querySelectorAll('.scratchable'));
       initializeScratchableCanvas(scratchItems);
+      removeLoadingOverlay();
+    }
+
+    function removeLoadingOverlay() {
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
     }
 
     function initializeScratchableCanvas(scratchItems) {
@@ -98,7 +107,6 @@ $scratchItems = fetchScratchItems();
         canvas.width = scratchable.offsetWidth;
         canvas.height = scratchable.offsetHeight;
         canvas.style.overflowX = "hidden";
-
 
         const isScratched = scratchable.dataset.scratched === "1";
         if (isScratched) {
@@ -204,7 +212,8 @@ $scratchItems = fetchScratchItems();
       document.body.appendChild(container);
 
       const fireworks = new Fireworks.default(container, {
-        /* Fireworks options */ });
+        /* Fireworks options */
+      });
       fireworks.start();
 
       setTimeout(() => {
