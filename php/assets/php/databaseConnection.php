@@ -1,6 +1,6 @@
 <?php
 // Connection to database using credentials in config.php, also has functions for databases
-require_once("config.php");
+require_once("databaseConfig.php");
 
 // Make connection to database
 function connect_to_database()
