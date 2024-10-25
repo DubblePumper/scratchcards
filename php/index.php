@@ -97,6 +97,8 @@ $scratchItems = fetchScratchItems();
         });
         canvas.width = scratchable.offsetWidth;
         canvas.height = scratchable.offsetHeight;
+        canvas.style.overflowX = "hidden";
+
 
         const isScratched = scratchable.dataset.scratched === "1";
         if (isScratched) {
