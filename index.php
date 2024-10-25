@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="icon" href="images/favicon.png" type="image/x-icon" />
+    <?php require_once("php/databaseConnection.php"); ?>
     <style>
       .scratchable {
         position: relative;
