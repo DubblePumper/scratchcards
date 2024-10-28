@@ -27,7 +27,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
   exit;
 }
 
+// Handle push subscription saving
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['subscription'])) {
+  $subscription = json_decode($_POST['subscription'], true);
+  saveSubscription($subscription);
+  echo json_encode(['status' => 'success']);
+  exit;
+}
+
+function saveSubscription($subscription)
+{
+  $pdo = connect_to_database();
+  $stmt = $pdo->prepare("REPLACE INTO subscriptions (endpoint, p256dh, auth) VALUES (?, ?, ?)");
+  $stmt->execute([$subscription['endpoint'], $subscription['keys']['p256dh'], $subscription['keys']['auth']]);
+}
+
 $scratchItems = fetchScratchItems();
+$vapidPublicKey = 'BEwUXj9WEZ4MLzQIcjaurlatlcF_N-3egXKxdOnw6xCCXQtrDaAm6yJJeRj8yiYzBtD-F8J45C6fhEn0tiLt9eU'; // Your VAPID public key
+$vapidPrivateKey = 'klZ8EglEozIcBRQ4Y_QesIZdkXh-HVtkENsy1DeenfI'; // Your VAPID private key
 ?>
 
 <!DOCTYPE html>
@@ -72,8 +89,7 @@ $scratchItems = fetchScratchItems();
     <h1 class="capitalize text-6xl text-black">Scratch the items</h1>
     <h2 class="capitalize text-4xl mt-5 text-black">1 Per Day</h2>
   </header>
-
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-20 place-content-around justify-items-center items-center overflow-x-hidden last:mb-10 *:flex *:justify-center *:items-center *:w-72 *:h-24 *:bg-neutral-50 *:text-neutral-900 *:rounded-full *:border-2 *:border-black *:cursor-pointer *:select-none" id="scratchGrid">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-20 place-content-around justify-items-center items-center overflow-x-hidden last:mb-10" id="scratchGrid">
     <?php foreach ($scratchItems as $item): ?>
       <div class="grid-item scratchable overflow-x-hidden" data-id="<?= $item['scratching_ID']; ?>" data-scratched="<?= $item['scratching_isScratched']; ?>">
         <p><?= htmlspecialchars($item['scratching_name']); ?></p>
@@ -82,13 +98,15 @@ $scratchItems = fetchScratchItems();
     <?php endforeach; ?>
   </div>
 
-  <script type="text/javascript">
+  <script>
     document.addEventListener("DOMContentLoaded", main);
 
-    function main() {
+    async function main() {
       const scratchItems = Array.from(document.querySelectorAll('.scratchable'));
       initializeScratchableCanvas(scratchItems);
       removeLoadingOverlay();
+      await registerServiceWorker();
+      await subscribeUserToPush();
     }
 
     function removeLoadingOverlay() {
@@ -183,11 +201,9 @@ $scratchItems = fetchScratchItems();
         triggerFireworks();
         await markItemScratched(itemId);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Disable further scratching and update display
         canvas.removeEventListener("mousedown", scratch);
         const scratchable = document.querySelector(`.scratchable[data-id='${itemId}']`);
-        scratchable.dataset.scratched = "1"; // Update the dataset
+        scratchable.dataset.scratched = "1";
       }
     }
 
@@ -220,6 +236,46 @@ $scratchItems = fetchScratchItems();
         fireworks.stop();
         document.body.removeChild(container);
       }, 5000);
+    }
+
+    async function registerServiceWorker() {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const swRegistration = await navigator.serviceWorker.register('/service-worker.js');
+          console.log('Service Worker Registered');
+        } catch (error) {
+          console.error('Service Worker registration failed:', error);
+        }
+      }
+    }
+
+    async function subscribeUserToPush() {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        const swRegistration = await navigator.serviceWorker.ready;
+        const subscription = await swRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array('<?= $vapidPublicKey ?>') // Your VAPID public key
+        });
+
+        // Send subscription to server
+        await fetch('', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: `subscription=${JSON.stringify(subscription)}`
+        });
+      } else {
+        console.error('Notification permission denied');
+      }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      return new Uint8Array([...rawData].map((char) => char.charCodeAt(0)));
     }
   </script>
 </body>
