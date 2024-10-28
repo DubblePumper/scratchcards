@@ -89,7 +89,7 @@ $vapidPrivateKey = 'klZ8EglEozIcBRQ4Y_QesIZdkXh-HVtkENsy1DeenfI'; // Your VAPID 
     <h1 class="capitalize text-6xl text-black">Scratch the items</h1>
     <h2 class="capitalize text-4xl mt-5 text-black">1 Per Day</h2>
   </header>
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-20 place-content-around justify-items-center items-center overflow-x-hidden last:mb-10" id="scratchGrid">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-20 place-content-around justify-items-center items-center overflow-x-hidden last:mb-10 *:flex *:justify-center *:items-center *:w-72 *:h-24 *:bg-neutral-50 *:text-neutral-900 *:rounded-full *:border-2 *:border-black *:cursor-pointer *:select-none" id="scratchGrid">
     <?php foreach ($scratchItems as $item): ?>
       <div class="grid-item scratchable overflow-x-hidden" data-id="<?= $item['scratching_ID']; ?>" data-scratched="<?= $item['scratching_isScratched']; ?>">
         <p><?= htmlspecialchars($item['scratching_name']); ?></p>
